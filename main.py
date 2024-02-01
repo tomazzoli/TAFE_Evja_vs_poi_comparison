@@ -44,11 +44,13 @@ def writeToCsvFile(to_csv):
 if __name__ == '__main__':
     print('iniziato')
     to_csv = []
-    out = {}
+
     for sensore in range(1,8):
+        out = {}
         sklearn_metrics_mape = compare(sensore)
         print('sklearn.metrics.mape ',str(sensore), sklearn_metrics_mape)
         out['sensore'] = sensore
         out['mape_vs_evja'] = sklearn_metrics_mape
         to_csv.append(out)
+        writeToCsvFile(to_csv)
     writeToCsvFile(to_csv)
