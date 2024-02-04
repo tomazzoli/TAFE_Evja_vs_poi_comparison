@@ -2,10 +2,12 @@ import os
 import csv
 import numpy as np
 import pandas as pd
+import math
 from sklearn.metrics import (mean_absolute_percentage_error as mape)
 data_header = ['target','evja_temp','timestamp_normalizzato']
 DIR_ESITI = 'esiti'
 DIR_DATI = 'dati'
+DATASETS=[{'in':'Dataset_sens_', 'out':'esitiCfrEvja'}, {'in':'Dataset_original_sens_', 'out':'esitiCfrEvjaOriginal'}]
 CSV_BASE_NAME='Dataset_sens_'
 data_header_index = 'timestamp_normalizzato'
 CSV_EXTENSION = '.csv'
@@ -19,8 +21,8 @@ def __createMultiDimArray(dataframe,data_header,data_header_index):
 
     return data
 
-def compare(sensore):
-    filename = DIR_DATI + os.path.sep + CSV_BASE_NAME + str(sensore) + CSV_EXTENSION
+def compare(sensore,filenameBase):
+    filename = DIR_DATI + os.path.sep + filenameBase + str(sensore) + CSV_EXTENSION
     df = pd.read_csv(filename)
     data = __createMultiDimArray(df,data_header,data_header_index)
     target = []
@@ -28,29 +30,38 @@ def compare(sensore):
     for i in range(len(data)):
         val_target = data[i,0]
         val_evia = data[i, 1]
+        if math.isnan(val_evia):
+            val_evia = 0
         target.append(val_target)
         evja.append(val_evia)
     sklearn_metrics_mape = mape(target,evja)
     return sklearn_metrics_mape
 
-def writeToCsvFile(to_csv):
-    outFile = DIR_ESITI + os.path.sep + 'esitiCfrEvja' + CSV_EXTENSION
+def writeToCsvFile(to_csv,outFileName):
+    outFile = DIR_ESITI + os.path.sep + outFileName + CSV_EXTENSION
     keys = to_csv[0].keys()
     with open(outFile, 'w', newline='') as f:
         dict_writer = csv.DictWriter(f, fieldnames=keys)
         dict_writer.writeheader()
         dict_writer.writerows(to_csv)
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print('iniziato')
-    to_csv = []
 
+def myMain(quale):
+    inFile = quale.get('in')
+    outFile= quale.get('out')
+    to_csv = []
     for sensore in range(1,8):
         out = {}
-        sklearn_metrics_mape = compare(sensore)
+        sklearn_metrics_mape = compare(sensore,inFile)
         print('sklearn.metrics.mape ',str(sensore), sklearn_metrics_mape)
         out['sensore'] = sensore
         out['mape_vs_evja'] = sklearn_metrics_mape
         to_csv.append(out)
-        writeToCsvFile(to_csv)
-    writeToCsvFile(to_csv)
+        writeToCsvFile(to_csv,outFile)
+    writeToCsvFile(to_csv,outFile)
+
+if __name__ == '__main__':
+    print('iniziato')
+    for quale in DATASETS:
+        myMain(quale)
+
+
